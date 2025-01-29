@@ -1,0 +1,122 @@
+-- What was the total quantity sold for all products?
+
+SELECT 
+    pd.product_id, pd.product_name, SUM(s.qty) AS Total_Sales
+FROM
+    product_details pd
+        JOIN
+    sales s ON pd.product_id = s.prod_id
+GROUP BY pd.product_id , pd.product_name
+
+-- What is the total generated revenue for all products before discounts?
+
+SELECT 
+    SUM(s.qty * s.price) AS Total_Revenue
+FROM
+    sales s
+
+What was the total discount amount for all products?
+
+select sum(s.discount) as Total_Discount
+from sales s
+
+
+How many unique transactions were there?
+
+select count(distinct txn_id)
+from sales
+
+-- What are the average unique products purchased in each transaction?
+
+with cte_trasaction_product as (
+select s.txn_id, count(distinct s.prod_id) as unique_product_ids
+from sales s
+group by s.txn_id)
+
+select round(avg(ctp.unique_product_ids),0)
+from cte_trasaction_product ctp
+
+-- What is the average discount value per transaction?
+
+with cte_discount_per_transaction as (
+select s.txn_id, sum(s.qty*s.price*s.discount)/100 as discount_price
+from sales s
+group by s.txn_id)
+
+select round(avg(cdp.discount_price),0)
+from cte_discount_per_transaction cdp
+
+-- What is the average revenue for member transactions and non-member transactions?
+
+with cte_trasaction_revenue as (
+select s.member,s.txn_id, sum(s.qty*s.price) as total_revenue
+from sales s
+group by s.member,s.txn_id)
+
+select ctr.member, round(avg(ctr.total_revenue),0) as Avg_total_revenue
+from cte_trasaction_revenue ctr
+group by ctr.member
+
+-- What are the top 3 products by total revenue before discount?
+
+SELECT 
+    pd.product_id,
+    pd.product_name,
+    SUM(s.qty * s.price) AS Total_Revenue
+FROM
+    sales s
+        JOIN
+    product_details pd ON pd.product_id = s.prod_id
+GROUP BY pd.product_id , pd.product_name
+ORDER BY pd.product_id , pd.product_name DESC
+LIMIT 3
+
+-- What are the total quantity, revenue and discount for each segment?
+
+SELECT 
+    pd.segment_name,
+    SUM(s.qty) AS Total_Quantity,
+    SUM(s.qty * s.price) AS Total_Reveneu,
+    SUM(s.qty * s.price * s.discount) / 100 AS Total_Discount
+FROM
+    sales s
+        JOIN
+    product_details pd ON pd.product_id = s.prod_id
+GROUP BY pd.segment_name
+
+-- What is the top selling product for each segment?
+
+SELECT 
+    pd.segment_id,
+    pd.segment_name,
+    SUM(s.qty * s.price) AS Total_Reveneu
+FROM
+    product_details pd
+        JOIN
+    sales s ON s.prod_id = pd.product_id
+GROUP BY pd.segment_id , pd.segment_name
+
+-- What are the total quantity, revenue and discount for each category?
+
+SELECT 
+    pd.category_name,
+    SUM(s.qty) AS Total_Quantity,
+    SUM(s.qty * s.price) AS Total_Reveneu,
+    SUM(s.qty * s.price * s.discount) / 100 AS Total_Discount
+FROM
+    sales s
+        JOIN
+    product_details pd ON pd.product_id = s.prod_id
+GROUP BY pd.category_name
+
+-- What is the top selling product for each category?
+
+SELECT 
+    pd.category_id,
+    pd.category_name,
+    SUM(s.qty * s.price) AS Total_Reveneu
+FROM
+    product_details pd
+        JOIN
+    sales s ON s.prod_id = pd.product_id
+GROUP BY pd.category_id , pd.category_name
